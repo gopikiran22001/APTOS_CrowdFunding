@@ -117,7 +117,7 @@ const Admin: React.FC = () => {
         goalAmount: c.target_amount / 100000000, // Convert from octas to APT
         raisedAmount: c.raised_amount / 100000000, // Convert from octas to APT
         deadline: new Date(c.deadline_secs * 1000),
-        status: c.approved ? 'active' : 'pending',
+        status: !c.approved &&!c.is_closed ? 'pending' : 'active',
         organizer: c.organizer,
         imageUrl: c.image_url,
         createdAt: new Date(), // Would need to get from contract events

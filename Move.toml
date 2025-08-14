@@ -1,0 +1,16 @@
+[package]
+name = "fund"
+version = "1.0.0"
+authors = []
+
+[addresses]
+crowdfunding = "0a530d3043952a54e96e20d7fb9461eabd252ad0b19b028bcb78c47fc518dec4"
+
+[dev-addresses]
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "aptos-framework-v1.8.2"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dev-dependencies]

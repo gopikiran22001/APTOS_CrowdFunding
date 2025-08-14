@@ -19,15 +19,15 @@ A decentralized crowdfunding platform built on the Aptos blockchain, enabling us
 
 ## 🌟 Overview
 
-The Aptos Crowdfunding Platform is a full-stack decentralized application (dApp) that leverages the Aptos blockchain to provide a secure, transparent, and efficient crowdfunding experience. Users can create campaigns, contribute funds, and administrators can approve or reject campaigns based on platform guidelines.
+The Aptos Crowdfunding Platform is a full-stack decentralized application (dApp) that leverages the Aptos blockchain to provide a secure, transparent, and efficient crowdfunding experience. Users can create campaigns, contribute funds, and track progress in real-time while maintaining full control over their digital assets.
 
-### Key Benefits
+## 📸 Screenshots
 
-- **Decentralized**: Built on Aptos blockchain for transparency and security
-- **NFT Support**: Optional NFT-based fundraising with customizable pricing
-- **Admin Governance**: Multi-level approval system for campaign quality control
-- **Real-time Updates**: Live blockchain data integration
-- **User-friendly Interface**: Modern React-based UI with responsive design
+### Campaigns Page
+
+This screenshot shows the main campaigns page, where users can discover, search, filter, and sort various crowdfunding campaigns.
+
+![A screenshot of the Aptos Crowdfunding platform's 'Campaigns' page. The page features a header with navigation links, a main title 'Discover Amazing Campaigns', a search bar, and filter options for 'Status', 'Categories', and 'Sort By'. Below these controls, three campaign cards are displayed: 'tsunami' (Pending), 'drought' (Pending), and 'Flood' (Active), each with an illustrative image and a brief description.](assets/campaigns_page.png)
 
 ## ✨ Features
 

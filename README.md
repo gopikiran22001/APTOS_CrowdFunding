@@ -27,7 +27,7 @@ The Aptos Crowdfunding Platform is a full-stack decentralized application (dApp)
 
 This screenshot shows the main campaigns page, where users can discover, search, filter, and sort various crowdfunding campaigns.
 
-![A screenshot of the Aptos Crowdfunding platform's 'Campaigns' page. The page features a header with navigation links, a main title 'Discover Amazing Campaigns', a search bar, and filter options for 'Status', 'Categories', and 'Sort By'. Below these controls, three campaign cards are displayed: 'tsunami' (Pending), 'drought' (Pending), and 'Flood' (Active), each with an illustrative image and a brief description.](assets\campaigns_page.png)
+![A screenshot of the Aptos Crowdfunding platform's 'Campaigns' page. The page features a header with navigation links, a main title 'Discover Amazing Campaigns', a search bar, and filter options for 'Status', 'Categories', and 'Sort By'. Below these controls, three campaign cards are displayed: 'tsunami' (Pending), 'drought' (Pending), and 'Flood' (Active), each with an illustrative image and a brief description.](.assets\campaigns_page.png)
 
 ## ✨ Features
 

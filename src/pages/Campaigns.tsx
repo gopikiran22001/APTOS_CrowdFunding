@@ -8,6 +8,7 @@ const Campaigns: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   const { 
     loading, 
@@ -47,8 +48,37 @@ const Campaigns: React.FC = () => {
       // filtered = filtered.filter(campaign => campaign.category === categoryFilter);
     }
 
+    // Apply sorting
+    filtered = sortCampaigns(filtered, sortBy);
+
     setFilteredCampaigns(filtered);
-  }, [campaigns, searchTerm, statusFilter, categoryFilter, getCampaignStatus]);
+  }, [campaigns, searchTerm, statusFilter, categoryFilter, sortBy, getCampaignStatus]);
+
+  // Sort campaigns based on selected criteria
+  const sortCampaigns = (campaignsToSort: Campaign[], sortCriteria: string) => {
+    const sorted = [...campaignsToSort];
+    
+    switch (sortCriteria) {
+      case 'newest':
+        // Sort by campaign ID (assuming higher ID = newer campaign)
+        return sorted.sort((a, b) => b.id - a.id);
+      
+      case 'oldest':
+        // Sort by campaign ID (assuming lower ID = older campaign)
+        return sorted.sort((a, b) => a.id - b.id);
+      
+      case 'popular':
+        // Sort by raised amount (most funded first)
+        return sorted.sort((a, b) => b.raised_amount - a.raised_amount);
+      
+      case 'ending':
+        // Sort by deadline (ending soonest first)
+        return sorted.sort((a, b) => a.deadline_secs - b.deadline_secs);
+      
+      default:
+        return sorted;
+    }
+  };
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp * 1000);
@@ -229,7 +259,11 @@ const Campaigns: React.FC = () => {
 
             {/* Sort */}
             <div className="relative">
-              <select className="custom-dropdown appearance-none input-field w-full pr-10 cursor-pointer transition-all duration-300 ease-in-out">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="custom-dropdown appearance-none input-field w-full pr-10 cursor-pointer transition-all duration-300 ease-in-out"
+              >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
                 <option value="popular">Most Popular</option>

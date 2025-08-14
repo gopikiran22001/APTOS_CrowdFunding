@@ -124,6 +124,9 @@ const Admin: React.FC = () => {
         adminNotes: ''
       }));
       
+      // Sort campaigns by newest first (by ID)
+      uiCampaigns.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+      
       setCampaigns(uiCampaigns);
       console.log('UI campaigns set:', uiCampaigns);
       
@@ -159,6 +162,9 @@ const Admin: React.FC = () => {
           createdAt: new Date('2024-01-08')
         }
       ];
+      
+      // Sort mock campaigns by newest first (by ID)
+      mockCampaigns.sort((a, b) => parseInt(b.id) - parseInt(a.id));
       
       setCampaigns(mockCampaigns);
     } finally {

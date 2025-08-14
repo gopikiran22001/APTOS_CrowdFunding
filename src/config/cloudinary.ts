@@ -26,7 +26,7 @@ export const IMAGE_TRANSFORMATIONS = {
 // File size limits
 export const FILE_LIMITS = {
   MAX_SIZE: 5 * 1024 * 1024, // 5MB
-  SUPPORTED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+  SUPPORTED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp','image/avif'],
 };
 
 // Helper function to get Cloudinary URL

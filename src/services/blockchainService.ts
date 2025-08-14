@@ -194,7 +194,7 @@ class BlockchainService {
 
   // Create campaign transaction payload
   createCampaignPayload(payload: CreateCampaignPayload): Types.EntryFunctionPayload {
-    
+
     const entryFunctionPayload = {
       function: `${this.moduleAddress}::crowdfunding::${CONTRACT_FUNCTIONS.CREATE_CAMPAIGN}`,
       type_arguments: [],
@@ -295,15 +295,22 @@ class BlockchainService {
 
   // Parse active campaigns response
   private parseActiveCampaignsResponse(response: any): Campaign[] {
-    if (!response || !Array.isArray(response)) return [];
-
+    if (!response || !Array.isArray(response)) {
+      return [];
+    }
+    
     try {
-      return response.map((item: any) => {
+      console.log(response[0]);
+      let data=response[0];
+      data=data.map((item: any) => {
         if (item && item.id && item.campaign) {
           return this.parseCampaignResponse(item.id, item.campaign);
         }
         return null;
-      }).filter((item): item is Campaign => item !== null);
+      });
+      console.log(data);  
+      // data=data.filter((item): item.campaign is Campaign => item !== null);
+      return data;
     } catch (error) {
       console.error('Error parsing active campaigns response:', error);
       return [];

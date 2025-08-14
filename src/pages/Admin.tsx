@@ -8,9 +8,13 @@ import {
   AlertCircle,
   Clock,
   TrendingUp,
-  Users
+  Users,
+  Key
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { blockchainService } from '../services/blockchainService';
+import { getModuleAddress } from '../config/blockchain';
+import { AptosClient } from 'aptos';
 
 interface Campaign {
   id: string;
@@ -34,65 +38,140 @@ const Admin: React.FC = () => {
   const [adminNotes, setAdminNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('pending');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminAddress, setAdminAddress] = useState<string>('');
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [aptosClient] = useState(() => new AptosClient(process.env.REACT_APP_APTOS_NODE_URL || 'https://fullnode.testnet.aptoslabs.com'));
 
-  // Mock data - replace with actual API calls
+  // Check admin status when wallet connects
   useEffect(() => {
-    const mockCampaigns: Campaign[] = [
-      {
-        id: '1',
-        title: 'Eco-Friendly Water Bottle',
-        description: 'Sustainable water bottles made from recycled materials to reduce plastic waste.',
-        goalAmount: 5000,
-        raisedAmount: 0,
-        deadline: new Date('2024-03-15'),
-        status: 'pending',
-        organizer: '0x1234...5678',
-        imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-        createdAt: new Date('2024-01-10'),
-        adminNotes: 'Campaign looks promising but needs more details about manufacturing process.'
-      },
-      {
-        id: '2',
-        title: 'Community Garden Project',
-        description: 'Building a community garden to provide fresh produce and educational opportunities.',
-        goalAmount: 3000,
-        raisedAmount: 0,
-        deadline: new Date('2024-02-20'),
-        status: 'pending',
-        organizer: '0x8765...4321',
-        imageUrl: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400',
-        createdAt: new Date('2024-01-08')
-      },
-      {
-        id: '3',
-        title: 'Local Art Gallery',
-        description: 'Supporting local artists by creating a community art gallery space.',
-        goalAmount: 8000,
-        raisedAmount: 0,
-        deadline: new Date('2024-04-10'),
-        status: 'pending',
-        organizer: '0x9999...8888',
-        imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400',
-        createdAt: new Date('2024-01-12')
-      },
-      {
-        id: '4',
-        title: 'Tech Education for Kids',
-        description: 'Providing coding and technology education to underprivileged children.',
-        goalAmount: 6000,
-        raisedAmount: 0,
-        deadline: new Date('2024-05-15'),
-        status: 'rejected',
-        organizer: '0xaaaa...bbbb',
-        imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400',
-        createdAt: new Date('2024-01-05'),
-        adminNotes: 'Rejected due to insufficient project planning and unclear budget allocation.'
+    const checkAdminStatus = async () => {
+      if (!connected || !account) {
+        setIsAdmin(false);
+        setCheckingAdmin(false);
+        return;
       }
-    ];
 
-    setCampaigns(mockCampaigns);
-    setLoading(false);
-  }, []);
+      try {
+        setCheckingAdmin(true);
+        const walletAddress = account.address.toString();
+        console.log('Checking admin status for wallet:', walletAddress);
+        
+        // First get the admin address from the contract
+        try {
+          const response = await aptosClient.view({
+            function: `${getModuleAddress()}::crowdfunding::get_admin`,
+            type_arguments: [],
+            arguments: []
+          });
+          
+          // Handle MoveValue response properly
+          if (response && Array.isArray(response) && response.length > 0) {
+            const contractAdminAddress = response[0] as string;
+            setAdminAddress(contractAdminAddress);
+            
+            // Check if current wallet is admin
+            const adminStatus = await blockchainService.isAdmin(walletAddress);
+            setIsAdmin(adminStatus);
+            
+            console.log('Contract admin address:', contractAdminAddress);
+            console.log('Current wallet is admin:', adminStatus);
+          } else {
+            setAdminAddress('Unable to fetch');
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error('Error fetching admin address:', error);
+          setAdminAddress('Unable to fetch');
+          setIsAdmin(false);
+        }
+        
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [connected, account, aptosClient]);
+
+  // Load campaigns from blockchain
+  const loadCampaigns = async () => {
+    if (!isAdmin) return;
+    
+    try {
+      setLoading(true);
+      console.log('Loading campaigns from blockchain...');
+      
+      // Load real campaigns from blockchain
+      const activeCampaigns = await blockchainService.getActiveCampaigns();
+      console.log('Active campaigns loaded:', activeCampaigns);
+      
+      // Convert blockchain campaigns to UI format
+      const uiCampaigns: Campaign[] = activeCampaigns.map(c => ({
+        id: c.id.toString(),
+        title: c.title,
+        description: c.description,
+        goalAmount: c.target_amount / 100000000, // Convert from octas to APT
+        raisedAmount: c.raised_amount / 100000000, // Convert from octas to APT
+        deadline: new Date(c.deadline_secs * 1000),
+        status: c.approved ? 'active' : 'pending',
+        organizer: c.organizer,
+        imageUrl: c.image_url,
+        createdAt: new Date(), // Would need to get from contract events
+        adminNotes: ''
+      }));
+      
+      setCampaigns(uiCampaigns);
+      console.log('UI campaigns set:', uiCampaigns);
+      
+    } catch (error) {
+      console.error('Error loading campaigns:', error);
+      toast.error('Failed to load campaigns from blockchain. Using mock data instead.');
+      
+      // Fallback to mock data if blockchain fails
+      const mockCampaigns: Campaign[] = [
+        {
+          id: '1',
+          title: 'Eco-Friendly Water Bottle',
+          description: 'Sustainable water bottles made from recycled materials to reduce plastic waste.',
+          goalAmount: 5000,
+          raisedAmount: 0,
+          deadline: new Date('2024-03-15'),
+          status: 'pending',
+          organizer: '0x1234...5678',
+          imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+          createdAt: new Date('2024-01-10'),
+          adminNotes: 'Campaign looks promising but needs more details about manufacturing process.'
+        },
+        {
+          id: '2',
+          title: 'Community Garden Project',
+          description: 'Building a community garden to provide fresh produce and educational opportunities.',
+          goalAmount: 3000,
+          raisedAmount: 0,
+          deadline: new Date('2024-02-20'),
+          status: 'pending',
+          organizer: '0x8765...4321',
+          imageUrl: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400',
+          createdAt: new Date('2024-01-08')
+        }
+      ];
+      
+      setCampaigns(mockCampaigns);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load campaigns when admin status is confirmed
+  useEffect(() => {
+    if (isAdmin) {
+      loadCampaigns();
+    }
+  }, [isAdmin]);
 
   const getStatusBadge = (status: string) => {
     const statusClasses = {
@@ -140,30 +219,61 @@ const Admin: React.FC = () => {
   };
 
   const handleApprove = async (campaignId: string) => {
+    if (!isAdmin) {
+      toast.error('Admin privileges required');
+      return;
+    }
+
+    if (!connected || !account) {
+      toast.error('Wallet not connected');
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
-      // Mock API call - replace with actual blockchain transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Use blockchain service to approve campaign
+      const campaignIdNum = parseInt(campaignId);
+      const payload = blockchainService.approveCampaignPayload(campaignIdNum);
       
-      setCampaigns(prev => prev.map(campaign => 
-        campaign.id === campaignId 
-          ? { ...campaign, status: 'active' as const, adminNotes }
-          : campaign
-      ));
+      console.log('Approval payload:', payload);
       
-      setSelectedCampaign(null);
-      setAdminNotes('');
-      toast.success('Campaign approved successfully!');
+      // Use window.aptos for transaction signing (Petra wallet)
+      if (typeof window !== 'undefined' && window.aptos) {
+        const response = await window.aptos.signAndSubmitTransaction(payload);
+        console.log('Transaction submitted:', response);
+        
+        // Wait for transaction confirmation
+        await aptosClient.waitForTransaction(response.hash);
+        
+        // Refresh campaigns from blockchain to get updated state
+        await loadCampaigns();
+        
+        setSelectedCampaign(null);
+        setAdminNotes('');
+        toast.success('Campaign approved successfully! Transaction confirmed on blockchain.');
+      } else {
+        throw new Error('Petra wallet not available');
+      }
     } catch (error) {
-      toast.error('Failed to approve campaign. Please try again.');
       console.error('Error approving campaign:', error);
+      toast.error('Failed to approve campaign. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleReject = async (campaignId: string) => {
+    if (!isAdmin) {
+      toast.error('Admin privileges required');
+      return;
+    }
+
+    if (!connected || !account) {
+      toast.error('Wallet not connected');
+      return;
+    }
+
     if (!adminNotes.trim()) {
       toast.error('Please provide a reason for rejection');
       return;
@@ -172,21 +282,35 @@ const Admin: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      // Mock API call - replace with actual blockchain transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Use blockchain service to close/reject campaign
+      const campaignIdNum = parseInt(campaignId);
+      const payload = blockchainService.closeCampaignPayload({
+        campaign_id: campaignIdNum,
+        reason: adminNotes
+      });
       
-      setCampaigns(prev => prev.map(campaign => 
-        campaign.id === campaignId 
-          ? { ...campaign, status: 'rejected' as const, adminNotes }
-          : campaign
-      ));
+      console.log('Rejection payload:', payload);
       
-      setSelectedCampaign(null);
-      setAdminNotes('');
-      toast.success('Campaign rejected successfully!');
+      // Use window.aptos for transaction signing (Petra wallet)
+      if (typeof window !== 'undefined' && window.aptos) {
+        const response = await window.aptos.signAndSubmitTransaction(payload);
+        console.log('Transaction submitted:', response);
+        
+        // Wait for transaction confirmation
+        await aptosClient.waitForTransaction(response.hash);
+        
+        // Refresh campaigns from blockchain to get updated state
+        await loadCampaigns();
+        
+        setSelectedCampaign(null);
+        setAdminNotes('');
+        toast.success('Campaign rejected successfully! Transaction confirmed on blockchain.');
+      } else {
+        throw new Error('Petra wallet not available');
+      }
     } catch (error) {
-      toast.error('Failed to reject campaign. Please try again.');
       console.error('Error rejecting campaign:', error);
+      toast.error('Failed to reject campaign. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -211,9 +335,19 @@ const Admin: React.FC = () => {
     );
   }
 
-  // Check if user is admin (mock check - replace with actual admin verification)
-  const isAdmin = account?.address?.toString() === '0x1234...5678'; // Replace with actual admin address check
+  // Show loading while checking admin status
+  if (checkingAdmin) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying admin privileges...</p>
+        </div>
+      </div>
+    );
+  }
 
+  // Check if user is admin using blockchain service
   if (!isAdmin) {
     return (
       <div className="text-center py-20">
@@ -223,7 +357,12 @@ const Admin: React.FC = () => {
           You don't have permission to access admin features
         </p>
         <div className="inline-block p-6 bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-500">Admin privileges required</p>
+          <div className="text-sm text-gray-500 mb-2">
+            <strong>Current Wallet:</strong> {account?.address?.toString().slice(0, 6)}...{account?.address?.toString().slice(-4)}
+          </div>
+          <div className="text-sm text-gray-500">
+            <strong>Admin Address:</strong> {adminAddress ? `${adminAddress.slice(0, 6)}...${adminAddress.slice(-4)}` : 'Loading...'}
+          </div>
         </div>
       </div>
     );
@@ -249,10 +388,42 @@ const Admin: React.FC = () => {
           <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-2">
               Manage and verify crowdfunding campaigns on the platform
+            </p>
+            <div className="flex items-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <Key className="w-4 h-4 text-primary-600" />
+                <span className="text-gray-600">Admin Address:</span>
+                <span className="font-mono text-primary-700 bg-primary-50 px-2 py-1 rounded">
+                  {adminAddress ? `${adminAddress.slice(0, 6)}...${adminAddress.slice(-4)}` : 'Loading...'}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Shield className="w-4 h-4 text-green-600" />
+                <span className="text-gray-600">Current Wallet:</span>
+                <span className="font-mono text-green-700 bg-green-50 px-2 py-1 rounded">
+                  {account?.address?.toString().slice(0, 6)}...{account?.address?.toString().slice(-4)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Integration Status Note */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-green-900 mb-1">Admin Access Verified - Blockchain Ready</h3>
+            <p className="text-sm text-green-700">
+              Your wallet has admin privileges. Campaign approval/rejection actions now perform real blockchain transactions. 
+              Make sure your Petra wallet is connected and has sufficient APT for gas fees.
             </p>
           </div>
         </div>
@@ -298,16 +469,35 @@ const Admin: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Campaign Management</h2>
           
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="input-field w-48"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="active">Active</option>
-            <option value="rejected">Rejected</option>
-          </select>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={loadCampaigns}
+              disabled={loading}
+              className="btn-secondary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}>
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+              </div>
+              <span>Refresh</span>
+            </button>
+            
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="input-field w-48"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
         </div>
 
         {filteredCampaigns.length === 0 ? (

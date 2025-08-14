@@ -1,7 +1,7 @@
 // Blockchain Configuration for Aptos Crowdfunding dApp
 export const BLOCKCHAIN_CONFIG = {
   // Module address from .env file
-  MODULE_ADDRESS:"0a530d3043952a54e96e20d7fb9461eabd252ad0b19b028bcb78c47fc518dec4",
+  MODULE_ADDRESS: process.env.REACT_APP_MODULE_ADDRESS || "0a530d3043952a54e96e20d7fb9461eabd252ad0b19b028bcb78c47fc518dec4",
   MODULE_NAME: 'crowdfunding',
   
   // Aptos network configuration

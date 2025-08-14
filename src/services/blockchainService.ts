@@ -75,6 +75,8 @@ class BlockchainService {
     debugConfig(); // Debug environment variables
     this.moduleAddress = getModuleAddress();
     console.log('BlockchainService initialized with module address:', this.moduleAddress);
+    console.log('Full module path:', `${this.moduleAddress}::crowdfunding`);
+    console.log('Available functions:', Object.values(CONTRACT_FUNCTIONS));
   }
 
   // Get all active campaigns
@@ -112,13 +114,20 @@ class BlockchainService {
   // Get campaign by ID
   async getCampaign(id: number): Promise<Campaign | null> {
     try {
+      console.log(`Fetching campaign with ID: ${id}`);
+      console.log(`Function: ${this.moduleAddress}::crowdfunding::${CONTRACT_FUNCTIONS.GET_CAMPAIGN}`);
+      
       const response = await aptosClient.view({
         function: `${this.moduleAddress}::crowdfunding::${CONTRACT_FUNCTIONS.GET_CAMPAIGN}`,
         type_arguments: [],
         arguments: [id.toString()]
       });
 
-      return this.parseCampaignResponse(id, response);
+      console.log('Campaign response:', response);
+      const parsedCampaign = this.parseCampaignResponse(id, response);
+      console.log('Parsed campaign:', parsedCampaign);
+      
+      return parsedCampaign;
     } catch (error) {
       console.error('Error fetching campaign:', error);
       return null;
@@ -160,6 +169,7 @@ class BlockchainService {
 
   // Check if address is admin
   async isAdmin(address: string): Promise<boolean> {
+   
     try {
       const response = await aptosClient.view({
         function: `${this.moduleAddress}::crowdfunding::${CONTRACT_FUNCTIONS.IS_ADMIN}`,
@@ -211,7 +221,7 @@ class BlockchainService {
 
     // This line prints the payload to the console
     console.log("Generated Payload:", JSON.stringify(entryFunctionPayload, null, 2));
-
+    
     return entryFunctionPayload;
   }
 
@@ -300,16 +310,20 @@ class BlockchainService {
     }
     
     try {
-      console.log(response[0]);
-      let data=response[0];
-      data=data.map((item: any) => {
+      console.log('Raw response:', response);
+      let data = response[0];
+      if (!data || !Array.isArray(data)) {
+        return [];
+      }
+      
+      data = data.map((item: any) => {
         if (item && item.id && item.campaign) {
           return this.parseCampaignResponse(item.id, item.campaign);
         }
         return null;
-      });
-      console.log(data);  
-      // data=data.filter((item): item.campaign is Campaign => item !== null);
+      }).filter((item): item is Campaign => item !== null);
+      
+      console.log('Parsed campaigns:', data);
       return data;
     } catch (error) {
       console.error('Error parsing active campaigns response:', error);

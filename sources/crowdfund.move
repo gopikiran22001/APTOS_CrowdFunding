@@ -489,4 +489,9 @@ public fun get_user_profile(addr: address): (vector<u64>, vector<Getcampaign>) a
         addr == registry.admin
     }
 
+    #[view]
+    public fun get_signer_balance(addr:address):u64{
+        coin::balance<AptosCoin>(owner:addr);
+    }
+
 }

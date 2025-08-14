@@ -331,7 +331,7 @@ const Campaigns: React.FC = () => {
 
                   {/* Action Button */}
                   <Link
-                    to={`/campaign/${campaign.id}`}
+                    to={`/campaigns/${campaign.id}`}
                     className="block w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white text-center py-3 px-6 rounded-xl font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-200 transform hover:scale-105"
                   >
                     View Campaign

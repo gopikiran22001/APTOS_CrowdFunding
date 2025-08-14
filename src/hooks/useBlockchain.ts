@@ -1,13 +1,17 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { blockchainService, Campaign, DonationRecord, CreateCampaignPayload, ExtendDeadlinePayload, CloseCampaignPayload, UserProfile } from '../services/blockchainService';
+import { blockchainService } from '../services/blockchainService';
+import { Campaign, DonationRecord, CreateCampaignPayload, ExtendDeadlinePayload, CloseCampaignPayload, UserProfile } from '../services/blockchainService';
 import { ERROR_MESSAGES } from '../config/blockchain';
 import toast from 'react-hot-toast';
 
-
+// TypeScript declaration for Petra wallet
 declare global {
   interface Window {
-    aptos: any;
+    aptos: {
+      signAndSubmitTransaction: (payload: any) => Promise<{ hash: string }>;
+      getBalance: () => Promise<{ octa: string }>;
+    };
   }
 }
 
@@ -153,27 +157,46 @@ export const useBlockchain = () => {
     }
   }, [account, checkWalletConnection]);
 
-  // Donate to campaign (simplified for now)
+  // Donate to campaign using real blockchain transaction
   const donateToCampaign = useCallback(async (campaignId: number, amount: number) => {
     if (!checkWalletConnection()) return false;
     
     setLoading(true);
     try {
-      // For now, simulate the transaction and update local state
-      // TODO: Implement real blockchain transaction when type issues are resolved
-      toast.success('Donation successful! (Local)');
+      // Amount is already in octas, no need to convert again
+      console.log('Donating amount in octas:', amount);
       
-      // Update campaign raised amount
-      setCampaigns(prev => prev.map(c => 
-        c.id === campaignId 
-          ? { ...c, raised_amount: c.raised_amount + amount }
-          : c
-      ));
+      // Generate donation transaction payload
+      const payload = blockchainService.donatePayload(campaignId, amount);
+      console.log('Donation payload:', payload);
       
-      return true;
+      // Use window.aptos for transaction signing (Petra wallet)
+      if (typeof window !== 'undefined' && window.aptos) {
+        const response = await window.aptos.signAndSubmitTransaction(payload);
+        console.log('Donation transaction submitted:', response);
+        
+        // Wait for transaction confirmation
+        const aptosClient = new (await import('aptos')).AptosClient(
+          process.env.REACT_APP_APTOS_NODE_URL || 'https://fullnode.testnet.aptoslabs.com'
+        );
+        await aptosClient.waitForTransaction(response.hash);
+        
+        toast.success('Donation successful! Transaction confirmed on blockchain.');
+        
+        // Update local state to reflect the donation
+        setCampaigns(prev => prev.map(c => 
+          c.id === campaignId 
+            ? { ...c, raised_amount: c.raised_amount + amount }
+            : c
+        ));
+        
+        return true;
+      } else {
+        throw new Error('Petra wallet not available');
+      }
     } catch (error) {
       console.error('Error donating to campaign:', error);
-      toast.error('Failed to process donation');
+      toast.error('Failed to process donation. Please try again.');
       return false;
     } finally {
       setLoading(false);

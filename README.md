@@ -29,6 +29,25 @@ This screenshot shows the main campaigns page, where users can discover, search,
 
 <img width="1896" height="868" alt="Screenshot 2025-08-14 125351" src="https://github.com/user-attachments/assets/938f2157-6532-4063-ad28-a6dfdae9b743" />
 
+Admin Dashboard
+
+![WhatsApp Image 2025-08-14 at 13 11 46_83982b17](https://github.com/user-attachments/assets/5d4ee126-413c-47f8-9407-ed9b1543f0b9)
+
+
+Profile
+
+![WhatsApp Image 2025-08-14 at 13 11 46_4b04a76f](https://github.com/user-attachments/assets/deec908c-2736-4453-8ec4-1899cca09e4e)
+
+Campaign Craetion
+
+![WhatsApp Image 2025-08-14 at 13 11 46_58cea7ed](https://github.com/user-attachments/assets/584cad30-54f9-498c-b8e2-f9b8b0ce6353)
+
+HomePage
+
+![WhatsApp Image 2025-08-14 at 13 11 47_ae12dfa1](https://github.com/user-attachments/assets/9870d47e-b308-4bcc-bd7a-a1bb629cbfbd)
+
+
+
 
 
 

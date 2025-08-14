@@ -14,6 +14,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
+import { blockchainService } from '../services/blockchainService';
 
 interface Campaign {
   id: string;
@@ -42,54 +43,76 @@ const Profile: React.FC = () => {
   const [userDonations, setUserDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock data - replace with actual API calls
+  // Load user data from blockchain
   useEffect(() => {
-    if (connected && account) {
-      const mockCampaigns: Campaign[] = [
-        {
-          id: '1',
-          title: 'Eco-Friendly Water Bottle',
-          description: 'Sustainable water bottles made from recycled materials.',
-          goalAmount: 5000,
-          raisedAmount: 3200,
-          deadline: new Date('2024-03-15'),
-          status: 'active',
-          imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400'
-        },
-        {
-          id: '2',
-          title: 'Local Art Gallery',
-          description: 'Supporting local artists with a community gallery.',
-          goalAmount: 8000,
-          raisedAmount: 1200,
-          deadline: new Date('2024-04-10'),
-          status: 'active',
-          imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400'
-        }
-      ];
+    const loadUserData = async () => {
+      if (!connected || !account) {
+        setLoading(false);
+        return;
+      }
 
-      const mockDonations: Donation[] = [
-        {
-          id: '1',
-          campaignId: '3',
-          campaignTitle: 'Community Garden Project',
-          amount: 100,
-          timestamp: new Date('2024-01-15'),
-          message: 'Great initiative!'
-        },
-        {
-          id: '2',
-          campaignId: '4',
-          campaignTitle: 'Tech Education for Kids',
-          amount: 250,
-          timestamp: new Date('2024-01-10')
+      try {
+        setLoading(true);
+        const walletAddress = account.address.toString();
+        
+        // Get user profile from blockchain
+        const userProfile = await blockchainService.getUserProfile(walletAddress);
+        
+        // Get campaigns created by user
+        const userCampaignsData: Campaign[] = [];
+        for (const campaignId of userProfile.campaigns_created) {
+          try {
+            const campaign = await blockchainService.getCampaign(campaignId);
+            if (campaign) {
+              userCampaignsData.push({
+                id: campaign.id.toString(),
+                title: campaign.title,
+                description: campaign.description,
+                goalAmount: campaign.target_amount / 100000000, // Convert from octas to APT
+                raisedAmount: campaign.raised_amount / 100000000, // Convert from octas to APT
+                deadline: new Date(campaign.deadline_secs * 1000),
+                status: campaign.approved ? 'active' : 'pending',
+                imageUrl: campaign.image_url
+              });
+            }
+          } catch (campaignError) {
+            console.error(`Error loading campaign ${campaignId}:`, campaignError);
+            // Continue with other campaigns
+          }
         }
-      ];
+        
+        // Get donations made by user
+        const userDonationsData: Donation[] = [];
+        for (const campaign of userProfile.donations_made) {
+          try {
+            userDonationsData.push({
+              id: `${campaign.id}-${Date.now()}`, // Generate unique ID
+              campaignId: campaign.id.toString(),
+              campaignTitle: campaign.title,
+              amount: campaign.raised_amount / 100000000, // This would need to be actual donation amount
+              timestamp: new Date(campaign.deadline_secs * 1000), // This would need to be actual donation timestamp
+              message: 'Donation made'
+            });
+          } catch (donationError) {
+            console.error(`Error processing donation for campaign ${campaign.id}:`, donationError);
+            // Continue with other donations
+          }
+        }
+        
+        setUserCampaigns(userCampaignsData);
+        setUserDonations(userDonationsData);
+        
+      } catch (error) {
+        console.error('Error loading user data from blockchain:', error);
+        // Fallback to empty arrays if blockchain fails
+        setUserCampaigns([]);
+        setUserDonations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setUserCampaigns(mockCampaigns);
-      setUserDonations(mockDonations);
-    }
-    setLoading(false);
+    loadUserData();
   }, [connected, account]);
 
   const getStatusBadge = (status: Campaign['status']) => {

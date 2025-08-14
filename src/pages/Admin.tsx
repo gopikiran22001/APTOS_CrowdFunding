@@ -316,9 +316,15 @@ const Admin: React.FC = () => {
     }
   };
 
+  // Filter campaigns to show only pending ones by default
   const filteredCampaigns = campaigns.filter(campaign => 
     filterStatus === 'all' || campaign.status === filterStatus
   );
+
+  // Get counts for different statuses
+  const pendingCount = campaigns.filter(c => c.status === 'pending').length;
+  const activeCount = campaigns.filter(c => c.status === 'active').length;
+  const rejectedCount = campaigns.filter(c => c.status === 'rejected').length;
 
   if (!connected) {
     return (
@@ -375,10 +381,6 @@ const Admin: React.FC = () => {
       </div>
     );
   }
-
-  const pendingCount = campaigns.filter(c => c.status === 'pending').length;
-  const activeCount = campaigns.filter(c => c.status === 'active').length;
-  const rejectedCount = campaigns.filter(c => c.status === 'rejected').length;
 
   return (
     <div className="space-y-8">
@@ -492,10 +494,10 @@ const Admin: React.FC = () => {
               onChange={(e) => setFilterStatus(e.target.value)}
               className="input-field w-48"
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="active">Active</option>
+              <option value="pending">Pending Review</option>
+              <option value="active">Active Campaigns</option>
               <option value="rejected">Rejected</option>
+              <option value="all">All Status</option>
             </select>
           </div>
         </div>
@@ -509,7 +511,7 @@ const Admin: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {filteredCampaigns.map((campaign) => (
-              <div key={campaign.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={campaign.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="md:flex items-start space-x-4">
                   <div className="md:w-32 md:h-24 flex-shrink-0 mb-4 md:mb-0">
                     <img
@@ -566,7 +568,7 @@ const Admin: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => setSelectedCampaign(campaign)}
-                        className="btn-secondary"
+                        className="btn-secondary hover:bg-gray-100 transition-colors"
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Review
@@ -577,18 +579,18 @@ const Admin: React.FC = () => {
                           <button
                             onClick={() => handleApprove(campaign.id)}
                             disabled={isProcessing}
-                            className="btn-success disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                           >
                             <CheckCircle className="w-4 h-4 mr-2" />
-                            Approve
+                            {isProcessing ? 'Processing...' : 'Approve'}
                           </button>
                           <button
                             onClick={() => handleReject(campaign.id)}
                             disabled={isProcessing}
-                            className="btn-danger disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                           >
                             <XCircle className="w-4 h-4 mr-2" />
-                            Reject
+                            {isProcessing ? 'Processing...' : 'Reject'}
                           </button>
                         </>
                       )}
@@ -662,18 +664,18 @@ const Admin: React.FC = () => {
                     <button
                       onClick={() => handleApprove(selectedCampaign.id)}
                       disabled={isProcessing}
-                      className="btn-success flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-1"
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Approve Campaign
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      {isProcessing ? 'Processing...' : 'Approve Campaign'}
                     </button>
                     <button
                       onClick={() => handleReject(selectedCampaign.id)}
                       disabled={isProcessing || !adminNotes.trim()}
-                      className="btn-danger flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-1"
                     >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject Campaign
+                      <XCircle className="w-5 h-5 mr-2" />
+                      {isProcessing ? 'Processing...' : 'Reject Campaign'}
                     </button>
                   </div>
                 )}

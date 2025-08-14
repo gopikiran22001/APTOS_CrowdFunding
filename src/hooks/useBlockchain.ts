@@ -37,11 +37,10 @@ export const useBlockchain = () => {
     setLoading(true);
     try {
       const campaignsData = await blockchainService.getActiveCampaigns();
-      const response = await window.aptos.signAndSubmitTransaction(campaignsData);
-      console.log("campaignsData");
-      setCampaigns(response);
-      console.log(response);
-      return response;
+      console.log("campaignsData",campaignsData);
+      setCampaigns(campaignsData);
+      // console.log(campaignsData);
+      return campaignsData;
     } catch (error) {
       console.error('Error loading campaigns:', error);
       toast.error('Failed to load campaigns');

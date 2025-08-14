@@ -81,6 +81,9 @@ const Profile: React.FC = () => {
           }
         }
         
+        // Sort campaigns by newest first (by ID)
+        userCampaignsData.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+        
         // Get donations made by user
         const userDonationsData: Donation[] = [];
         for (const campaign of userProfile.donations_made) {
@@ -98,6 +101,9 @@ const Profile: React.FC = () => {
             // Continue with other donations
           }
         }
+        
+        // Sort donations by newest first (by timestamp)
+        userDonationsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
         
         setUserCampaigns(userCampaignsData);
         setUserDonations(userDonationsData);

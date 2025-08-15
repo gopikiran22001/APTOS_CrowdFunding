@@ -187,8 +187,8 @@ is_admin(address)
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd APTOS_HACK
+git clone https://github.com/gopikiran22001/APTOS_CrowdFunding.git
+cd APTOS_CrowdFunding
 ```
 
 ### 2. Install Dependencies

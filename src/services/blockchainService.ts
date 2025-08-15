@@ -434,11 +434,11 @@ class BlockchainService {
 
   // Get campaign status based on contract logic
   getCampaignStatus(campaign: Campaign): string {
-    if (campaign.is_closed) {
+    if(campaign.is_closed && !campaign.approved) {
       return 'closed';
     }
 
-    if (!campaign.approved) {
+    if (!campaign.approved && !campaign.is_closed) {
       return 'pending';
     }
 
@@ -446,10 +446,14 @@ class BlockchainService {
     if (campaign.deadline_secs < currentTime) {
       return 'expired';
     }
+    // console.log('campaign raised',campaign.raised_amount);
+    // console.log('campaign target',campaign.target_amount);
 
     if (campaign.raised_amount >= campaign.target_amount) {
       return 'successful';
     }
+
+    if(campaign.approved && !campaign.is_closed && campaign.deadline_secs >= currentTime) return 'active';
 
     return 'active';
   }

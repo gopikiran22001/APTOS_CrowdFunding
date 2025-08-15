@@ -103,7 +103,7 @@ const Profile: React.FC = () => {
         }
         
         // Sort donations by newest first (by timestamp)
-        userDonationsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        userDonationsData.sort((a, b) => parseInt(a.campaignId) - parseInt(b.campaignId));
         
         setUserCampaigns(userCampaignsData);
         setUserDonations(userDonationsData);

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { 
-  Shield, 
-  CheckCircle, 
-  XCircle, 
-  Eye, 
+import {
+  Shield,
+  CheckCircle,
+  XCircle,
+  Eye,
   AlertCircle,
   Clock,
   TrendingUp,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { blockchainService } from '../services/blockchainService';
-import { getModuleAddress } from '../config/blockchain';
+import { getModuleAddress, BLOCKCHAIN_CONFIG } from '../config/blockchain';
 import { AptosClient } from 'aptos';
 
 interface Campaign {
@@ -56,28 +56,24 @@ const Admin: React.FC = () => {
         setCheckingAdmin(true);
         const walletAddress = account.address.toString();
         console.log('Checking admin status for wallet:', walletAddress);
-        
+
         // First get the admin address from the contract
         try {
-          const response = await aptosClient.view({
-            function: `${getModuleAddress()}::crowdfunding::get_admin`,
-            type_arguments: [],
-            arguments: []
-          });
-          
+          const contractAdminAddress = process.env.REACT_APP_ADMIN_ADDRESS || '';
           // Handle MoveValue response properly
-          if (response && Array.isArray(response) && response.length > 0) {
-            const contractAdminAddress = response[0] as string;
+          console.log('Contract admin address:', contractAdminAddress);
+          if (contractAdminAddress.toString() !== '') {
             setAdminAddress(contractAdminAddress);
-            
+
             // Check if current wallet is admin
-            const adminStatus = await blockchainService.isAdmin(walletAddress);
+
+            const adminStatus = contractAdminAddress.toString() === walletAddress.toString();
+
             setIsAdmin(adminStatus);
-            
-            console.log('Contract admin address:', contractAdminAddress);
+
             console.log('Current wallet is admin:', adminStatus);
           } else {
-            setAdminAddress('Unable to fetch');
+            setAdminAddress('Restricted');
             setIsAdmin(false);
           }
         } catch (error) {
@@ -85,7 +81,7 @@ const Admin: React.FC = () => {
           setAdminAddress('Unable to fetch');
           setIsAdmin(false);
         }
-        
+
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
@@ -100,15 +96,15 @@ const Admin: React.FC = () => {
   // Load campaigns from blockchain
   const loadCampaigns = async () => {
     if (!isAdmin) return;
-    
+
     try {
       setLoading(true);
       console.log('Loading campaigns from blockchain...');
-      
+
       // Load real campaigns from blockchain
       const activeCampaigns = await blockchainService.getActiveCampaigns();
       console.log('Active campaigns loaded:', activeCampaigns);
-      
+
       // Convert blockchain campaigns to UI format
       const uiCampaigns: Campaign[] = activeCampaigns.map(c => ({
         id: c.id.toString(),
@@ -117,23 +113,23 @@ const Admin: React.FC = () => {
         goalAmount: c.target_amount / 100000000, // Convert from octas to APT
         raisedAmount: c.raised_amount / 100000000, // Convert from octas to APT
         deadline: new Date(c.deadline_secs * 1000),
-        status: !c.approved &&!c.is_closed ? 'pending' : 'active',
+        status: !c.approved && !c.is_closed ? 'pending' : 'active',
         organizer: c.organizer,
         imageUrl: c.image_url,
         createdAt: new Date(), // Would need to get from contract events
         adminNotes: ''
       }));
-      
+
       // Sort campaigns by newest first (by ID)
       uiCampaigns.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-      
+
       setCampaigns(uiCampaigns);
       console.log('UI campaigns set:', uiCampaigns);
-      
+
     } catch (error) {
       console.error('Error loading campaigns:', error);
       toast.error('Failed to load campaigns from blockchain. Using mock data instead.');
-      
+
       // Fallback to mock data if blockchain fails
       const mockCampaigns: Campaign[] = [
         {
@@ -162,10 +158,10 @@ const Admin: React.FC = () => {
           createdAt: new Date('2024-01-08')
         }
       ];
-      
+
       // Sort mock campaigns by newest first (by ID)
       mockCampaigns.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-      
+
       setCampaigns(mockCampaigns);
     } finally {
       setLoading(false);
@@ -236,25 +232,25 @@ const Admin: React.FC = () => {
     }
 
     setIsProcessing(true);
-    
+
     try {
       // Use blockchain service to approve campaign
       const campaignIdNum = parseInt(campaignId);
       const payload = blockchainService.approveCampaignPayload(campaignIdNum);
-      
+
       console.log('Approval payload:', payload);
-      
+
       // Use window.aptos for transaction signing (Petra wallet)
       if (typeof window !== 'undefined' && window.aptos) {
         const response = await window.aptos.signAndSubmitTransaction(payload);
         console.log('Transaction submitted:', response);
-        
+
         // Wait for transaction confirmation
         await aptosClient.waitForTransaction(response.hash);
-        
+
         // Refresh campaigns from blockchain to get updated state
         await loadCampaigns();
-        
+
         setSelectedCampaign(null);
         setAdminNotes('');
         toast.success('Campaign approved successfully! Transaction confirmed on blockchain.');
@@ -286,7 +282,7 @@ const Admin: React.FC = () => {
     }
 
     setIsProcessing(true);
-    
+
     try {
       // Use blockchain service to close/reject campaign
       const campaignIdNum = parseInt(campaignId);
@@ -294,20 +290,20 @@ const Admin: React.FC = () => {
         campaign_id: campaignIdNum,
         reason: adminNotes
       });
-      
+
       console.log('Rejection payload:', payload);
-      
+
       // Use window.aptos for transaction signing (Petra wallet)
       if (typeof window !== 'undefined' && window.aptos) {
         const response = await window.aptos.signAndSubmitTransaction(payload);
         console.log('Transaction submitted:', response);
-        
+
         // Wait for transaction confirmation
         await aptosClient.waitForTransaction(response.hash);
-        
+
         // Refresh campaigns from blockchain to get updated state
         await loadCampaigns();
-        
+
         setSelectedCampaign(null);
         setAdminNotes('');
         toast.success('Campaign rejected successfully! Transaction confirmed on blockchain.');
@@ -323,7 +319,7 @@ const Admin: React.FC = () => {
   };
 
   // Filter campaigns to show only pending ones by default
-  const filteredCampaigns = campaigns.filter(campaign => 
+  const filteredCampaigns = campaigns.filter(campaign =>
     filterStatus === 'all' || campaign.status === filterStatus
   );
 
@@ -430,7 +426,7 @@ const Admin: React.FC = () => {
           <div>
             <h3 className="text-sm font-medium text-green-900 mb-1">Admin Access Verified - Blockchain Ready</h3>
             <p className="text-sm text-green-700">
-              Your wallet has admin privileges. Campaign approval/rejection actions now perform real blockchain transactions. 
+              Your wallet has admin privileges. Campaign approval/rejection actions now perform real blockchain transactions.
               Make sure your Petra wallet is connected and has sufficient APT for gas fees.
             </p>
           </div>
@@ -446,7 +442,7 @@ const Admin: React.FC = () => {
           <div className="text-2xl font-bold text-gray-900 mb-1">{pendingCount}</div>
           <div className="text-sm text-gray-600">Pending Review</div>
         </div>
-        
+
         <div className="card text-center">
           <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <TrendingUp className="w-6 h-6 text-success-600" />
@@ -454,7 +450,7 @@ const Admin: React.FC = () => {
           <div className="text-2xl font-bold text-gray-900 mb-1">{activeCount}</div>
           <div className="text-sm text-gray-600">Active Campaigns</div>
         </div>
-        
+
         <div className="card text-center">
           <div className="w-12 h-12 bg-danger-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-6 h-6 text-danger-600" />
@@ -462,7 +458,7 @@ const Admin: React.FC = () => {
           <div className="text-2xl font-bold text-gray-900 mb-1">{rejectedCount}</div>
           <div className="text-sm text-gray-600">Rejected</div>
         </div>
-        
+
         <div className="card text-center">
           <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <Users className="w-6 h-6 text-secondary-600" />
@@ -476,7 +472,7 @@ const Admin: React.FC = () => {
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Campaign Management</h2>
-          
+
           <div className="flex items-center space-x-3">
             <button
               onClick={loadCampaigns}
@@ -494,7 +490,7 @@ const Admin: React.FC = () => {
               </div>
               <span>Refresh</span>
             </button>
-            
+
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -526,7 +522,7 @@ const Admin: React.FC = () => {
                       className="w-full h-24 md:h-full object-cover rounded-lg"
                     />
                   </div>
-                  
+
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -535,7 +531,7 @@ const Admin: React.FC = () => {
                       </div>
                       {getStatusBadge(campaign.status)}
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <div className="text-center">
                         <div className="text-sm font-semibold text-primary-600">
@@ -562,7 +558,7 @@ const Admin: React.FC = () => {
                         <div className="text-xs text-gray-500">Organizer</div>
                       </div>
                     </div>
-                    
+
                     {campaign.adminNotes && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                         <p className="text-sm text-yellow-800">
@@ -570,7 +566,7 @@ const Admin: React.FC = () => {
                         </p>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => setSelectedCampaign(campaign)}
@@ -579,7 +575,7 @@ const Admin: React.FC = () => {
                         <Eye className="w-4 h-4 mr-2" />
                         Review
                       </button>
-                      
+
                       {campaign.status === 'pending' && (
                         <>
                           <button
@@ -623,7 +619,7 @@ const Admin: React.FC = () => {
                   <XCircle className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Campaign Details</h4>
@@ -650,7 +646,7 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <label htmlFor="adminNotes" className="form-label">
                     Admin Notes
@@ -664,7 +660,7 @@ const Admin: React.FC = () => {
                     className="input-field resize-none"
                   />
                 </div>
-                
+
                 {selectedCampaign.status === 'pending' && (
                   <div className="flex space-x-3">
                     <button

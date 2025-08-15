@@ -6,7 +6,7 @@ import { useBlockchain, Campaign } from '../hooks/useBlockchain';
 const Campaigns: React.FC = () => {
   const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 

@@ -1,8 +1,10 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
 import { Home, Users, Plus, User, Shield, Heart } from 'lucide-react';
+import { AptosClient } from 'aptos';
+
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,6 +20,53 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Admin', href: '/admin', icon: Shield },
   ];
+  const { connected,account } = useWallet();
+  const [isAdmin, setIsAdmin] = useState(false);
+    const [aptosClient] = useState(() => new AptosClient(process.env.REACT_APP_APTOS_NODE_URL || 'https://fullnode.testnet.aptoslabs.com'));
+
+  
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!connected || !account) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const walletAddress = account.address.toString();
+        console.log('Checking admin status for wallet:', walletAddress);
+
+        // First get the admin address from the contract
+        try {
+          const contractAdminAddress = process.env.REACT_APP_ADMIN_ADDRESS || '';
+          // Handle MoveValue response properly
+          console.log('Contract admin address:', contractAdminAddress);
+          if (contractAdminAddress.toString() !== '') {
+
+            // Check if current wallet is admin
+
+            const adminStatus = contractAdminAddress.toString() === walletAddress.toString();
+
+            setIsAdmin(adminStatus);
+
+            console.log('Current wallet is admin:', adminStatus);
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error('Error fetching admin address:', error);
+          setIsAdmin(false);
+        }
+
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } finally {
+      }
+    };
+
+    checkAdminStatus();
+  }, [connected, account,aptosClient]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -35,16 +84,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <nav className="hidden md:flex space-x-8">
               {navigation.map((item) => {
+                if (item.name === 'Admin' && !isAdmin) return;
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive(item.href)
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(item.href)
                         ? 'text-primary-600 bg-primary-50'
                         : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{item.name}</span>

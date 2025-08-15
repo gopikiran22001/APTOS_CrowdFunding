@@ -415,7 +415,7 @@ module crowdfunding::crowdfunding {
     // Tab 2: Donations Made (history).
     // Get user profile: campaigns created and donations made
    #[view]
-public fun get_user_profile(addr: address): (vector<u64>, vector<Getcampaign>) acquires Registry {
+    public fun get_user_profile(addr: address): (vector<u64>, vector<Getcampaign>) acquires Registry {
     let registry = borrow_global<Registry>(@crowdfunding);
 
     let campaigns_created = if (table::contains(&registry.campaigns_by_user, addr)) {

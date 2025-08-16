@@ -5,6 +5,7 @@ A decentralized crowdfunding platform built on the Aptos blockchain, enabling us
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [UN Sustainable Development Goals (SDGs)](#un-sustainable-development-goals-sdgs)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
@@ -20,6 +21,40 @@ A decentralized crowdfunding platform built on the Aptos blockchain, enabling us
 ## 🌟 Overview
 
 The Aptos Crowdfunding Platform is a full-stack decentralized application (dApp) that leverages the Aptos blockchain to provide a secure, transparent, and efficient crowdfunding experience. Users can create campaigns, contribute funds, and track progress in real-time while maintaining full control over their digital assets.
+
+## 🎯 UN Sustainable Development Goals (SDGs)
+
+This platform directly contributes to several UN SDGs:
+
+### 🎓 **SDG 4: Quality Education**
+- Enable funding for educational projects and scholarships
+- Support digital literacy and blockchain education initiatives
+- Facilitate access to learning resources in underserved communities
+
+### 💼 **SDG 8: Decent Work and Economic Growth**
+- Create opportunities for entrepreneurs and innovators
+- Enable decentralized fundraising for startups and small businesses
+- Promote financial inclusion through blockchain technology
+
+### 🏭 **SDG 9: Industry, Innovation and Infrastructure**
+- Support technological innovation through crowdfunding
+- Enable funding for infrastructure development projects
+- Promote adoption of blockchain and Web3 technologies
+
+### 🤝 **SDG 10: Reduced Inequalities**
+- Provide equal access to funding opportunities globally
+- Remove traditional barriers to investment and fundraising
+- Enable participation regardless of geographic location or economic status
+
+### 🏘️ **SDG 11: Sustainable Cities and Communities**
+- Fund community development and urban sustainability projects
+- Support local initiatives and grassroots movements
+- Enable transparent allocation of community resources
+
+### 🤝 **SDG 17: Partnerships for the Goals**
+- Foster global collaboration through decentralized funding
+- Enable cross-border partnerships and initiatives
+- Create transparent mechanisms for international cooperation
 
 ## 📸 Screenshots
 
@@ -83,6 +118,7 @@ HomePage
 - **React 18**: Modern React with hooks and functional components
 - **TypeScript**: Type-safe development
 - **Tailwind CSS**: Utility-first CSS framework
+- **React Scripts**: Build tooling and development server
 - **Lucide React**: Beautiful, customizable icons
 - **React Router**: Client-side routing
 - **React Hot Toast**: User notifications
@@ -94,51 +130,44 @@ HomePage
 - **Aptos SDK**: Blockchain interaction
 
 ### Development Tools
-- **Vite**: Fast build tool and dev server
-- **ESLint**: Code quality and consistency
-- **Prettier**: Code formatting
+- **Create React App**: React development environment
 - **PostCSS**: CSS processing
+- **Autoprefixer**: CSS vendor prefixing
 
 ## 📁 Project Structure
 
 ```
-APTOS_HACK/
-├── 📁 public/                    # Static assets
-│   ├── index.html               # Main HTML file
-│   └── manifest.json            # PWA manifest
-├── 📁 src/                      # Source code
-│   ├── 📁 components/           # Reusable UI components
-│   │   └── Layout.tsx          # Main layout wrapper
-│   ├── 📁 config/               # Configuration files
-│   │   ├── blockchain.ts        # Blockchain configuration
-│   │   └── cloudinary.ts        # Cloudinary image service config
-│   ├── 📁 hooks/                # Custom React hooks
-│   │   └── useBlockchain.ts     # Blockchain interaction hook
-│   ├── 📁 pages/                # Application pages
-│   │   ├── Admin.tsx            # Admin dashboard
-│   │   ├── Campaigns.tsx        # Campaign listing
-│   │   ├── CampaignDetail.tsx   # Individual campaign view
-│   │   ├── CreateCampaign.tsx   # Campaign creation form
-│   │   ├── Home.tsx             # Landing page
-│   │   └── Profile.tsx          # User profile management
-│   ├── 📁 services/             # Business logic services
-│   │   └── blockchainService.ts # Blockchain interaction service
-│   ├── 📁 types/                # TypeScript type definitions
-│   │   └── campaign.ts          # Campaign-related interfaces
-│   ├── 📁 utils/                # Utility functions
-│   │   ├── cloudinary.ts        # Image upload utilities
-│   │   └── debugConfig.ts       # Debug configuration
-│   ├── App.tsx                  # Main application component
-│   ├── index.tsx                # Application entry point
-│   └── index.css                # Global styles
-├── 📁 sources/                   # Smart contract source code
-│   └── crowdfund.move           # Aptos Move smart contract
-├── Move.toml                     # Move package configuration
-├── package.json                  # Node.js dependencies
-├── tailwind.config.js            # Tailwind CSS configuration
-├── tsconfig.json                 # TypeScript configuration
-├── postcss.config.js             # PostCSS configuration
-└── README.md                     # This file
+APTOS_CrowdFunding/
+├── 📁 FrontEnd/                 # Frontend React application
+│   ├── 📁 public/              # Static assets
+│   │   ├── index.html          # Main HTML file
+│   │   └── manifest.json       # PWA manifest
+│   ├── 📁 src/                 # Source code
+│   │   ├── 📁 components/      # Reusable UI components
+│   │   ├── 📁 config/          # Configuration files
+│   │   ├── 📁 hooks/           # Custom React hooks
+│   │   ├── 📁 pages/           # Application pages
+│   │   ├── 📁 services/        # Business logic services
+│   │   ├── 📁 types/           # TypeScript type definitions
+│   │   ├── 📁 utils/           # Utility functions
+│   │   ├── App.tsx             # Main application component
+│   │   ├── index.tsx           # Application entry point
+│   │   └── index.css           # Global styles
+│   ├── package.json            # Node.js dependencies
+│   ├── tsconfig.json           # TypeScript configuration
+│   ├── tailwind.config.js      # Tailwind CSS configuration
+│   ├── postcss.config.js       # PostCSS configuration
+│   ├── env.example             # Environment variables template
+│   ├── CLOUDINARY_SETUP.md     # Cloudinary setup guide
+│   └── README.md               # Frontend documentation
+├── 📁 Backend/                  # Smart contract backend
+│   ├── 📁 sources/             # Move source files
+│   │   └── crowdfund.move      # Aptos Move smart contract
+│   ├── Move.toml               # Move package configuration
+│   └── README.md               # Backend documentation
+├── 📁 assets/                   # Project assets and screenshots
+├── .gitignore                   # Git ignore rules
+└── README.md                    # Main project documentation
 ```
 
 ## 🔗 Smart Contract
@@ -191,9 +220,10 @@ git clone https://github.com/gopikiran22001/APTOS_CrowdFunding.git
 cd APTOS_CrowdFunding
 ```
 
-### 2. Install Dependencies
+### 2. Install Frontend Dependencies
 
 ```bash
+cd FrontEnd
 npm install
 # or
 yarn install
@@ -201,7 +231,7 @@ yarn install
 
 ### 3. Environment Configuration
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the `FrontEnd` directory:
 
 ```env
 # Blockchain Configuration
@@ -217,28 +247,29 @@ REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 ### 4. Smart Contract Deployment
 
 ```bash
-# Navigate to sources directory
-cd sources
+# Navigate to backend directory
+cd Backend
 
 # Deploy the smart contract
 aptos move publish --named-addresses crowdfunding=your_address
 
-# Update .env with the deployed module address
+# Update FrontEnd/.env with the deployed module address
 ```
 
 ### 5. Start Development Server
 
 ```bash
-npm run dev
+# From Root directory
+npm start
 # or
-yarn dev
+yarn start
 ```
 
-The application will be available at `http://localhost:5173`
+The application will be available at `http://localhost:3000`
 
 ## ⚙️ Configuration
 
-### Blockchain Configuration (`src/config/blockchain.ts`)
+### Blockchain Configuration (`FrontEnd/src/config/blockchain.ts`)
 
 ```typescript
 export const BLOCKCHAIN_CONFIG = {
@@ -251,7 +282,7 @@ export const BLOCKCHAIN_CONFIG = {
 };
 ```
 
-### Tailwind Configuration (`tailwind.config.js`)
+### Tailwind Configuration (`FrontEnd/tailwind.config.js`)
 
 Custom color palette and design system:
 
@@ -371,9 +402,31 @@ const {
 ### Production Build
 
 ```bash
+# From FrontEnd directory
+cd FrontEnd
 npm run build
 # or
 yarn build
+```
+
+## 🚀 Complete Setup Commands
+
+```bash
+# 1. Clone and navigate
+git clone https://github.com/gopikiran22001/APTOS_CrowdFunding.git
+cd APTOS_CrowdFunding
+
+# 2. Setup frontend
+cd FrontEnd
+npm install
+copy env.example .env
+
+# 3. Start development server
+npm start
+
+# 4. Deploy smart contract (in new terminal)
+cd ../Backend
+aptos move publish --named-addresses crowdfunding=YOUR_ADDRESS
 ```
 
 ### Deployment Options
@@ -424,10 +477,10 @@ yarn test:coverage
 ```json
 {
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   }
 }
 ```

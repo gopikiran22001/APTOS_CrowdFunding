@@ -61,7 +61,7 @@ const Admin: React.FC = () => {
         try {
           const contractAdminAddress = process.env.REACT_APP_ADMIN_ADDRESS || '';
           // Handle MoveValue response properly
-          console.log('Contract admin address:', contractAdminAddress);
+          console.log('Contract admin address:', process.env.REACT_APP_ADMIN_ADDRESS);
           if (contractAdminAddress.toString() !== '') {
             setAdminAddress(contractAdminAddress);
 

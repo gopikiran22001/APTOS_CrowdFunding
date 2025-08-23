@@ -20,7 +20,8 @@ const CampaignDetail: React.FC = () => {
     loadCampaign, 
     donateToCampaign,
     getDonorCount,
-    getCampaignStatus
+    getCampaignStatus,
+    extendDeadline
   } = useBlockchain();
   
   const [donationAmount, setDonationAmount] = useState('');
@@ -30,6 +31,8 @@ const CampaignDetail: React.FC = () => {
   const [campaignLoading, setCampaignLoading] = useState(true);
   const [campaignError, setCampaignError] = useState<string | null>(null);
   const [userBalance, setUserBalance] = useState<number | null>(null);
+  const [showExtendModal, setShowExtendModal] = useState(false);
+  const [newDeadline, setNewDeadline] = useState('');
 
   // Load user's APT balance using smart contract view function
   const loadUserBalance = async () => {
@@ -239,6 +242,67 @@ const CampaignDetail: React.FC = () => {
     }
   };
 
+  const handleExtendDeadline = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!connected || !account || !currentCampaign) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+    
+    if (account.address.toString().slice(3) !== currentCampaign.organizer.toString().slice(2)) {
+      toast.error('Only the campaign creator can extend the deadline');
+      return;
+    }
+    
+    const newDeadlineTimestamp = Math.floor(new Date(newDeadline).getTime() / 1000);
+    
+    if (newDeadlineTimestamp <= currentCampaign.deadline_secs) {
+      toast.error('New deadline must be later than the current deadline');
+      return;
+    }
+    
+    if (newDeadlineTimestamp <= Math.floor(Date.now() / 1000)) {
+      toast.error('New deadline must be in the future');
+      return;
+    }
+    
+    // Maximum extension: 1 month (30 days)
+    const maxExtension = currentCampaign.deadline_secs + (30 * 24 * 60 * 60);
+    if (newDeadlineTimestamp > maxExtension) {
+      toast.error('Maximum extension is 1 month from current deadline');
+      return;
+    }
+    
+    toast.loading('Extending deadline on blockchain...', { id: 'extend-deadline' });
+    
+    try {
+      const success = await extendDeadline({
+        campaign_id: currentCampaign.id,
+        new_deadline_secs: newDeadlineTimestamp
+      });
+      
+      if (success) {
+        toast.success('Deadline extended successfully!', { id: 'extend-deadline' });
+        setShowExtendModal(false);
+        setNewDeadline('');
+        
+        // Reload campaign data
+        if (id) {
+          await loadCampaign(parseInt(id));
+        }
+      }
+    } catch (error) {
+      console.error('Error extending deadline:', error);
+      toast.error('Failed to extend deadline. Please try again.', { id: 'extend-deadline' });
+    } finally {
+      toast.dismiss();
+    }
+  };
+
+  const isOrganizer = connected && account && currentCampaign && 
+    account.address.toString().slice(3) === currentCampaign.organizer.toString().slice(2);
+
   const shareCampaign = () => {
     if (navigator.share) {
       navigator.share({
@@ -405,6 +469,18 @@ const CampaignDetail: React.FC = () => {
               >
                 <Heart className="w-5 h-5 mr-2" />
                 Support This Project
+              </button>
+            )}
+            {isOrganizer && (status === 'active' || status === 'expired') && (
+              <button
+                onClick={() => setShowExtendModal(true)}
+                className="btn-secondary flex-1"
+                title="Campaign creators can extend deadline up to 1 month"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Extend Deadline
               </button>
             )}
             <button
@@ -640,6 +716,65 @@ const CampaignDetail: React.FC = () => {
               )}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Extend Deadline Modal */}
+      {showExtendModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Extend Campaign Deadline</h3>
+            
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Current deadline:</strong> {formatDate(currentCampaign?.deadline_secs || 0)}
+              </p>
+              <p className="text-sm text-blue-600 mt-1">
+                <strong>Maximum extension:</strong> 1 month from current deadline
+              </p>
+            </div>
+            
+            <form onSubmit={handleExtendDeadline} className="space-y-4">
+              <div>
+                <label htmlFor="newDeadline" className="form-label">
+                  New Deadline *
+                </label>
+                <input
+                  type="datetime-local"
+                  id="newDeadline"
+                  value={newDeadline}
+                  onChange={(e) => setNewDeadline(e.target.value)}
+                  min={new Date((currentCampaign?.deadline_secs || 0) * 1000 + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
+                  max={new Date((currentCampaign?.deadline_secs || 0) * 1000 + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
+                  required
+                  className="input-field"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  Maximum 1 month extension from current deadline
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowExtendModal(false);
+                    setNewDeadline('');
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                >
+                  {loading ? 'Extending...' : 'Extend Deadline'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -232,25 +232,43 @@ export const useBlockchain = () => {
     }
   }, [account, checkWalletConnection, isAdmin]);
 
-  // Extend deadline (simplified for now)
+  // Extend deadline using real blockchain transaction
   const extendDeadline = useCallback(async (payload: ExtendDeadlinePayload) => {
     if (!checkWalletConnection()) return false;
     
     setLoading(true);
     try {
-      // For now, simulate the transaction
-      // TODO: Implement real blockchain transaction when type issues are resolved
-      setCampaigns(prev => prev.map(c => 
-        c.id === payload.campaign_id 
-          ? { ...c, deadline_secs: payload.new_deadline_secs }
-          : c
-      ));
+      // Generate extend deadline transaction payload
+      const transactionPayload = blockchainService.extendDeadlinePayload(payload);
+      console.log('Extend deadline payload:', transactionPayload);
       
-      toast.success('Deadline extended successfully! (Local)');
-      return true;
+      // Use window.aptos for transaction signing (Petra wallet)
+      if (typeof window !== 'undefined' && window.aptos) {
+        const response = await window.aptos.signAndSubmitTransaction(transactionPayload);
+        console.log('Extend deadline transaction submitted:', response);
+        
+        // Wait for transaction confirmation
+        const aptosClient = new (await import('aptos')).AptosClient(
+          process.env.REACT_APP_APTOS_NODE_URL || 'https://fullnode.testnet.aptoslabs.com'
+        );
+        await aptosClient.waitForTransaction(response.hash);
+        
+        toast.success('Deadline extended successfully!');
+        
+        // Update local state to reflect the change
+        setCampaigns(prev => prev.map(c => 
+          c.id === payload.campaign_id 
+            ? { ...c, deadline_secs: payload.new_deadline_secs }
+            : c
+        ));
+        
+        return true;
+      } else {
+        throw new Error('Petra wallet not available');
+      }
     } catch (error) {
       console.error('Error extending deadline:', error);
-      toast.error('Failed to extend deadline');
+      toast.error('Failed to extend deadline. Please try again.');
       return false;
     } finally {
       setLoading(false);
